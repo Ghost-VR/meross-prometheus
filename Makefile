@@ -15,3 +15,6 @@ docker_run:
 
 docker_probe:
 	docker run -i -t ghostvr/meross-prometheus-exporter /bin/bash
+
+docker_push:
+	docker push ghostvr/meross-prometheus-exporter:latest
