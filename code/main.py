@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import os
 
 from meross_iot.http_api import MerossHttpClient
 from meross_iot.manager import MerossManager
 from meross_iot.controller.mixins.electricity import ElectricityMixin
 from meross_iot.model.plugin.power import PowerInfo
+from meross_iot.model.http.exception import HttpApiError
 
 from meross_exporter.power_monitor import PowerMonitor
 from meross_exporter.metrics_server import MetricsServer
@@ -16,19 +18,30 @@ async def main():
   logging.basicConfig(level=logging.INFO)
 
   # Initialize metrics server
-  metrics_server = MetricsServer(port=9090) # 9090 by default
+  port = os.environ.get('MERTIRCS_SERVER_PORT', 9090) # 9090 by default
+  metrics_server = MetricsServer(port=port)
 
   # Login info
-  login_file_name = 'config/login'
-  with open(login_file_name) as f:
-    content = f.read().splitlines()
-    meross_email = content[0]
-    meross_password = content[1]
+  if os.environ.get('USE_LOGIN_INFO_FROM_ENV', 0) == '1':
+    meross_email = os.environ.get('MEROSS_EMAIL', "email_not_supplied")
+    meross_password = os.environ.get('MEROSS_PASSWORD', "password_not_supplied")
+  else:
+    login_file_name = 'config/login'
+    if os.path.exists(login_file_name):
+      with open(login_file_name) as f:
+        content = f.read().splitlines()
+        meross_email = content[0]
+        meross_password = content[1]
+    else:
+      exit("No Login info found. Please either set the ENV variables or use login file")
 
   # Initialize meross api server
   # Setup the HTTP client API from user-password
   _LOGGER.info(f'Logging in with email {meross_email}')
-  http_api_client = await MerossHttpClient.async_from_user_password(email=meross_email, password=meross_password, api_base_url="https://iot.meross.com")
+  try:
+    http_api_client = await MerossHttpClient.async_from_user_password(email=meross_email, password=meross_password, api_base_url="https://iot.meross.com")
+  except HttpApiError:
+    exit("Incorrect login info. Please check log for more details.")
 
   # Setup and start the device manager
   _LOGGER.info('Setup and start the device manager')
