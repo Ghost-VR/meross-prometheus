@@ -7,12 +7,16 @@ from meross_iot.controller.mixins.electricity import ElectricityMixin
 from meross_iot.model.plugin.power import PowerInfo
 
 from meross_exporter.power_monitor import PowerMonitor
+from meross_exporter.metrics_server import MetricsServer
 
 _LOGGER = logging.getLogger(__name__)
 
 async def main():
   # Config logger
   logging.basicConfig(level=logging.INFO)
+
+  # Initialize metrics server
+  metrics_server = MetricsServer(port=9090) # 9090 by default
 
   # Login info
   login_file_name = 'config/login'
@@ -47,20 +51,26 @@ async def main():
     _LOGGER.info(f'Initializing power monitor {monitor}')
     await monitor.init()
 
-    _LOGGER.info(f'Starting run loop for {monitor}')
-    # await monitor.run()
-    task = asyncio.create_task(monitor.run())
-    background_tasks.add(task)
-    task.add_done_callback(background_tasks.discard)
+    # Register monitor with metrics server
+    metrics_server.register_power_monitor(monitor)
+
+    if False:
+      _LOGGER.info(f'Starting run loop for {monitor}')
+      task = asyncio.create_task(monitor.run())
+      background_tasks.add(task)
+      task.add_done_callback(background_tasks.discard)
   
-  # Wait for all background tasks to complete
-  _LOGGER.info('Running forever...')
-  await asyncio.gather(*background_tasks)
-  
+  if False:
+    # Wait for all background tasks to complete
+    _LOGGER.info('Running forever...')
+    await asyncio.gather(*background_tasks)
+
+  await metrics_server.async_run_app()
+
   # Close the manager and logout from http_api
-  manager.close()
-  await http_api_client.async_logout()
-  _LOGGER.info('Exiting')
+  # manager.close()
+  # await http_api_client.async_logout()
+  # _LOGGER.info('Exiting')
 
 
 if __name__ == '__main__':
