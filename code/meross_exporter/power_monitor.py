@@ -33,8 +33,8 @@ class PowerMonitor:
     return {
       'voltage_volt': self._power_info.voltage,
       'current_ampere': self._power_info.current,
-      'power_watt': self._power_info.power,
-      'name': f'"{self._device.name}"'
+      'power_watt': self._power_info.power
+      # 'name': f'"{self._device.name}"'
     }
 
   def str_power_metrics(self) -> str:
