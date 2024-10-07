@@ -1,3 +1,6 @@
+DOCKER_IMAGE_NAME = ghostvr/meross-prometheus-exporter
+PLATFORM = linux/arm64,linux/amd64
+
 setup:
 	python3 -m venv .venv
 	source .venv/bin/activate
@@ -8,13 +11,13 @@ run:
 	python3 code/main.py
 
 docker_build:
-	docker build -t ghostvr/meross-prometheus-exporter .
+	docker build --platform $(PLATFORM) -t $(DOCKER_IMAGE_NAME) .
 
 docker_run:
-	docker run ghostvr/meross-prometheus-exporter
+	docker run $(DOCKER_IMAGE_NAME)
 
 docker_probe:
-	docker run -i -t ghostvr/meross-prometheus-exporter /bin/bash
+	docker run -i -t $(DOCKER_IMAGE_NAME) /bin/bash
 
 docker_push:
-	docker push ghostvr/meross-prometheus-exporter:latest
+	docker push $(DOCKER_IMAGE_NAME):latest
