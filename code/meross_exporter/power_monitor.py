@@ -23,12 +23,20 @@ class PowerMonitor:
     print(f'({self._device.name}) run() called')
     while True:
       await asyncio.sleep(self._update_interval / 1000)
-      await self.get_power_metrics()
+      await self.fetch_power_metrics()
       print (self.str_power_metrics())
 
-  async def get_power_metrics(self) -> None:
+  async def fetch_power_metrics(self) -> None:
     self._power_info = await self._device.async_get_instant_metrics()
   
+  def get_power_metrics(self) -> dict:
+    return {
+      'voltage_volt': self._power_info.voltage,
+      'current_ampere': self._power_info.current,
+      'power_watt': self._power_info.power,
+      'name': f'"{self._device.name}"'
+    }
+
   def str_power_metrics(self) -> str:
     # _LOGGER.info(f"({self._device.name}) POWER = {self._power_info.power} W, VOLTAGE = {self._power_info.voltage} V, CURRENT = {self._power_info.current} A")
     return f"({self._device.name}) POWER = {self._power_info.power} W, VOLTAGE = {self._power_info.voltage} V, CURRENT = {self._power_info.current} A"

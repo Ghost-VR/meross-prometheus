@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 
 from aiohttp import web
 from meross_exporter.power_monitor import PowerMonitor
@@ -22,14 +23,18 @@ class MetricsServer:
   # A simple async handler function
   async def handle_metrics(self, request):
     target = request.query.get('target', 'default_value')
-
+    
     if target in self._power_monitors:
-      await self._power_monitors[target].get_power_metrics()
-      response_text = self._power_monitors[target].str_power_metrics()
+      await self._power_monitors[target].fetch_power_metrics()
+      power_metrics = self._power_monitors[target].get_power_metrics()
+      response_text = ''
+      for key in power_metrics:
+        response_text += f'{key} {power_metrics[key]}\n'
     else:
       response_text = f"target {target} not exist"
 
     return web.Response(text=response_text)
+  
 
   # Function to create and start the server
   async def async_run_app(self):
