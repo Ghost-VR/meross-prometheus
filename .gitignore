@@ -1,2 +1,3 @@
 config/login
 .venv
+.DS_Store

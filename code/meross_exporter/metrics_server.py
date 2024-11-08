@@ -57,5 +57,6 @@ def main():
   server = MetricsServer(9090)
   server.run_app()
 
+
 if __name__ == '__main__':
   main()

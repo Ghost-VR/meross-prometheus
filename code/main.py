@@ -17,10 +17,6 @@ async def main():
   # Config logger
   logging.basicConfig(level=logging.INFO)
 
-  # Initialize metrics server
-  port = os.environ.get('MERTIRCS_SERVER_PORT', 9090) # 9090 by default
-  metrics_server = MetricsServer(port=port)
-
   # Login info
   if os.environ.get('USE_LOGIN_INFO_FROM_ENV', 0) == '1':
     meross_email = os.environ.get('MEROSS_EMAIL', "email_not_supplied")
@@ -34,6 +30,19 @@ async def main():
         meross_password = content[1]
     else:
       exit("No Login info found. Please either set the ENV variables or use login file")
+
+  # Start service
+  while True:
+    try:
+      await start_service(meross_email, meross_password)
+    except Exception as e:
+      _LOGGER.info(f'Caught a general exception: {e}')
+
+
+async def start_service(meross_email : str, meross_password : str):
+  # Initialize metrics server
+  port = os.environ.get('MERTIRCS_SERVER_PORT', 9090) # 9090 by default
+  metrics_server = MetricsServer(port=port)
 
   # Initialize meross api server
   # Setup the HTTP client API from user-password
@@ -56,7 +65,7 @@ async def main():
   power_monitors = []
   for device in meross_electric_devices:
     power_monitors.append(PowerMonitor(device))
-  
+
   # Initialize all power monitors, print once done
   _LOGGER.info('Initializing all power monitors')
   background_tasks = set()
@@ -67,17 +76,18 @@ async def main():
     # Register monitor with metrics server
     metrics_server.register_power_monitor(monitor)
 
-    if False:
-      _LOGGER.info(f'Starting run loop for {monitor}')
-      task = asyncio.create_task(monitor.run())
-      background_tasks.add(task)
-      task.add_done_callback(background_tasks.discard)
-  
-  if False:
-    # Wait for all background tasks to complete
-    _LOGGER.info('Running forever...')
-    await asyncio.gather(*background_tasks)
+    # if False:
+    #   _LOGGER.info(f'Starting run loop for {monitor}')
+    #   task = asyncio.create_task(monitor.run())
+    #   background_tasks.add(task)
+    #   task.add_done_callback(background_tasks.discard)
 
+  # if False:
+  #   # Wait for all background tasks to complete
+  #   _LOGGER.info('Running forever...')
+  #   await asyncio.gather(*background_tasks)
+
+  _LOGGER.info('Starting metric server')
   await metrics_server.async_run_app()
 
   # Close the manager and logout from http_api
