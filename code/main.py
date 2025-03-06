@@ -33,10 +33,7 @@ async def main():
 
   # Start service
   while True:
-    try:
-      await start_service(meross_email, meross_password)
-    except Exception as e:
-      _LOGGER.info(f'Caught a general exception: {e}')
+    await start_service(meross_email, meross_password)
 
 
 async def start_service(meross_email : str, meross_password : str):
@@ -87,13 +84,17 @@ async def start_service(meross_email : str, meross_password : str):
   #   _LOGGER.info('Running forever...')
   #   await asyncio.gather(*background_tasks)
 
-  _LOGGER.info('Starting metric server')
-  await metrics_server.async_run_app()
+  # Start metric server (Wait for quit)
+  # Note: In average, meross auth server token times out after 72 hours.
+  # Therefore, we need to restart this start_service() thread every ~48 hours.
+  _LOGGER.info('Starting metric server.')
+  await metrics_server.async_run_app(run_for_second=48 * 60 * 60 - 10)
+  _LOGGER.info('Metric server stopped.')
 
   # Close the manager and logout from http_api
-  # manager.close()
-  # await http_api_client.async_logout()
-  # _LOGGER.info('Exiting')
+  manager.close()
+  await http_api_client.async_logout()
+  _LOGGER.info('Exiting')
 
 
 if __name__ == '__main__':

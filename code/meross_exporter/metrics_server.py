@@ -37,7 +37,7 @@ class MetricsServer:
   
 
   # Function to create and start the server
-  async def async_run_app(self):
+  async def async_run_app(self, run_for_second : int = -1):
     self._app = web.Application()
     self._app.add_routes([web.get('/metrics', self.handle_metrics)])  # Define routes
     
@@ -48,8 +48,15 @@ class MetricsServer:
     await site.start()
 
     # Keep the server running
-    while True:
-      await asyncio.sleep(3600)  # Sleep for an hour
+    _LOGGER.info(f'Metrics server running with run_for_second={run_for_second}...')
+    if run_for_second > 0:
+      # Run for a fix amount of time
+      await asyncio.sleep(run_for_second)
+      _LOGGER.info(f'Exiting metrics server.')
+    else:
+      # Run forever
+      while True:
+        await asyncio.sleep(3600)  # Sleep for an hour
 
 
 # Main entry point to run the server
