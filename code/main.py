@@ -12,10 +12,15 @@ from meross_exporter.power_monitor import PowerMonitor
 from meross_exporter.metrics_server import MetricsServer
 
 _LOGGER = logging.getLogger(__name__)
+_NAME = 'meross-prometheus-exporter'
+_VERSION = '1.0.0'
 
 async def main():
   # Config logger
   logging.basicConfig(level=logging.INFO)
+
+  # Print version info
+  _LOGGER.info(f'Running {_NAME}: v{_VERSION}')
 
   # Login info
   if os.environ.get('USE_LOGIN_INFO_FROM_ENV', 0) == '1':

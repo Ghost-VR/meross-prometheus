@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import json
 
 from aiohttp import web
 from meross_exporter.power_monitor import PowerMonitor
@@ -8,6 +7,9 @@ from meross_exporter.power_monitor import PowerMonitor
 _LOGGER = logging.getLogger(__name__)
 
 class MetricsServer:
+  '''
+    Initializer
+  '''
   def __init__(
     self,
     port
@@ -19,22 +21,6 @@ class MetricsServer:
   def register_power_monitor(self, power_monitor : PowerMonitor) -> None:
     _LOGGER.info(f'Registered power monitor with lan ip {power_monitor._device.lan_ip}')
     self._power_monitors[power_monitor._device.lan_ip] = power_monitor
-
-  # A simple async handler function
-  async def handle_metrics(self, request):
-    target = request.query.get('target', 'default_value')
-    
-    if target in self._power_monitors:
-      await self._power_monitors[target].fetch_power_metrics()
-      power_metrics = self._power_monitors[target].get_power_metrics()
-      response_text = ''
-      for key in power_metrics:
-        response_text += f'{key} {power_metrics[key]}\n'
-    else:
-      response_text = f"target {target} not exist"
-
-    return web.Response(text=response_text)
-  
 
   # Function to create and start the server
   async def async_run_app(self, run_for_second : int = -1):
@@ -58,6 +44,20 @@ class MetricsServer:
       while True:
         await asyncio.sleep(3600)  # Sleep for an hour
 
+  # A simple async handler function
+  async def handle_metrics(self, request):
+    target = request.query.get('target', 'default_value')
+    
+    if target in self._power_monitors:
+      await self._power_monitors[target].fetch_power_metrics()
+      power_metrics = self._power_monitors[target].get_power_metrics()
+      response_text = ''
+      for key in power_metrics:
+        response_text += f'{key} {power_metrics[key]}\n'
+    else:
+      response_text = f"target {target} not exist"
+
+    return web.Response(text=response_text)
 
 # Main entry point to run the server
 def main():
